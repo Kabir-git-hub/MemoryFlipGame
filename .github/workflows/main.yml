@@ -28,11 +28,7 @@ jobs:
       - name: Install Qt with Multimedia
         run: |
           pip install aqtinstall
-          
-          # ১. Android এর জন্য Multimedia মডিউলসহ ইন্সটল
           python -m aqt install-qt linux android 6.6.0 android_arm64_v8a --outputdir ${{ github.workspace }}/Qt -m qtmultimedia
-          
-          # ২. Desktop এর জন্য Multimedia মডিউলসহ ইন্সটল (কখনো কখনো ডিপেন্ডেন্সির জন্য লাগে)
           python -m aqt install-qt linux desktop 6.6.0 gcc_64 --outputdir ${{ github.workspace }}/Qt -m qtmultimedia
 
       - name: Build APK
@@ -46,4 +42,26 @@ jobs:
           ANDROID_QT="$QT_ROOT/android_arm64_v8a"
           DESKTOP_QT="$QT_ROOT/gcc_64"
           
-          # Add binarie
+          # Add binaries to PATH
+          export PATH=$ANDROID_QT/bin:$DESKTOP_QT/bin:$PATH
+          
+          # Create build directory
+          mkdir build
+          cd build
+          
+          # Run qmake
+          $ANDROID_QT/bin/qmake ../Memoryflipgame.pro
+          
+          # Compile
+          make -j$(nproc)
+          
+          # Generate APK
+          $ANDROID_QT/bin/androiddeployqt --input android-libMemoryflipgame.so-deployment-settings.json --output android-build --android-platform android-24 --gradle --apk
+
+      # === এই অংশটিই আসল পরিবর্তন (Wildcard Search) ===
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MemoryFlipGame-APK
+          # **/*.apk মানে হলো build ফোল্ডারের ভেতর যেখানেই apk পাবে, সেটাই আপলোড করবে
+          path: build/**/*.apk
