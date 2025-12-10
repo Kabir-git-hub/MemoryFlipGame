@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file>assets/flip.wav</file>
+        <file>assets/img1.png</file>
+        <file>assets/img2.png</file>
+        <file>assets/img3.png</file>
+        <file>assets/img4.png</file>
+        <file>assets/img5.png</file>
+        <file>assets/img6.png</file>
+        <file>assets/img7.png</file>
+        <file>assets/img8.png</file>
+        <file>assets/match.wav</file>
+        <file>assets/win.wav</file>
+        <file>assets/wrong.wav</file>
+    </qresource>
+</RCC>
