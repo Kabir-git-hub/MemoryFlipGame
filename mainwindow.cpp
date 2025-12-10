@@ -6,28 +6,36 @@
 #include <QDateTime>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), firstCard(nullptr), secondCard(nullptr),
-    isProcessing(false), matchedPairs(0),
-    isPaused(false), isMuted(false), currentPlayer(1), scoreP1(0), scoreP2(0),
-    currentLevel(Medium)
+    : QMainWindow(parent)
+    , mainContainer(nullptr)
+    , firstCard(nullptr)
+    , secondCard(nullptr)
+    , isProcessing(false)
+    , isPaused(false)
+    , isMuted(false)
+    , matchedPairs(0)
+    , currentPlayer(1)
+    , scoreP1(0)
+    , scoreP2(0)
+    , currentLevel(Medium)
 {
     this->setWindowTitle("Memory Flip - Ultimate Battle");
     this->resize(1150, 850);
 
     this->setStyleSheet(
         "QMainWindow { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #141E30, stop:1 #243B55); }"
-        );
+    );
 
     sfxPlayer = new QMediaPlayer(this);
     audioOutput = new QAudioOutput(this);
     sfxPlayer->setAudioOutput(audioOutput);
     audioOutput->setVolume(1.0);
 
-    // ১. গেম টাইমার (মিনিট:সেকেন্ড)
+    // ১. গেম টাইমার
     gameTimer = new QTimer(this);
     connect(gameTimer, &QTimer::timeout, this, &MainWindow::updateTimer);
 
-    // ২. টার্ন টাইমার (দ্রুত আপডেট হবে স্মুথ বারের জন্য)
+    // ২. টার্ন টাইমার
     turnTimer = new QTimer(this);
     connect(turnTimer, &QTimer::timeout, this, &MainWindow::updateTurnTimer);
 
@@ -73,7 +81,7 @@ void MainWindow::setupStartMenu() {
 
     inputLayout->addWidget(l1); inputLayout->addWidget(p1NameInput);
     inputLayout->addWidget(l2); inputLayout->addWidget(p2NameInput);
-
+    
     QLabel *diffLabel = new QLabel("Select Difficulty:", this);
     diffLabel->setStyleSheet("color: #F1C40F; font-size: 18px; font-weight: bold; margin-top: 20px; margin-bottom: 10px;");
     diffLabel->setAlignment(Qt::AlignCenter);
@@ -116,13 +124,13 @@ void MainWindow::setupGame() {
 
     secondsElapsed = 0; matchedPairs = 0;
     scoreP1 = 0; scoreP2 = 0;
-    currentPlayer = 1;
+    currentPlayer = 1; 
     firstCard = nullptr; secondCard = nullptr;
     isProcessing = false; isPaused = false;
 
     int colCount = 4;
-    if (currentLevel == Easy) { totalPairs = 6; colCount = 4; }
-    else if (currentLevel == Medium) { totalPairs = 8; colCount = 4; }
+    if (currentLevel == Easy) { totalPairs = 6; colCount = 4; } 
+    else if (currentLevel == Medium) { totalPairs = 8; colCount = 4; } 
     else { totalPairs = 12; colCount = 6; }
 
     mainContainer = new QWidget(this);
@@ -139,7 +147,7 @@ void MainWindow::setupGame() {
     p1ScoreLabel = new QLabel("0", p1Panel);
     p1ScoreLabel->setAlignment(Qt::AlignCenter);
     p1ScoreLabel->setStyleSheet("font-size: 50px; font-weight: bold; color: #3498DB;");
-
+    
     // P1 Progress Bar
     p1TurnBar = new QProgressBar(p1Panel);
     p1TurnBar->setRange(0, TURN_DURATION);
@@ -148,9 +156,9 @@ void MainWindow::setupGame() {
     p1TurnBar->setFixedHeight(10);
     p1TurnBar->setStyleSheet("QProgressBar { background-color: #333; border-radius: 5px; } QProgressBar::chunk { background-color: #2ECC71; border-radius: 5px; }");
 
-    p1Layout->addWidget(p1NameLabel);
-    p1Layout->addWidget(p1TurnBar); // বারের অবস্থান
-    p1Layout->addWidget(p1ScoreLabel);
+    p1Layout->addWidget(p1NameLabel); 
+    p1Layout->addWidget(p1TurnBar);
+    p1Layout->addWidget(p1ScoreLabel); 
     p1Layout->addStretch();
     mainLayout->addWidget(p1Panel);
 
@@ -166,7 +174,7 @@ void MainWindow::setupGame() {
     pauseButton->setStyleSheet("background-color: rgba(255,255,255,0.1); border-radius: 20px; color: white; font-size: 18px;");
     connect(pauseButton, &QPushButton::clicked, this, &MainWindow::togglePause);
     headerLayout->addWidget(pauseButton);
-
+    
     headerLayout->addStretch();
     timerLabel = new QLabel("Time: 00:00", this);
     timerLabel->setStyleSheet("font-size: 22px; font-weight: bold; color: #F1C40F;");
@@ -181,11 +189,11 @@ void MainWindow::setupGame() {
     for(int i=1; i<=totalPairs; i++) { cardIds.append(i); cardIds.append(i); }
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::shuffle(cardIds.begin(), cardIds.end(), std::default_random_engine(seed));
-
+    
     for(int i=0; i<cardIds.size(); i++) {
         Card *newCard = new Card(this);
         int id = cardIds[i];
-        int imageId = (id > 8) ? (id % 8) + 1 : id;
+        int imageId = (id > 8) ? (id % 8) + 1 : id; 
         QString imgPath = QString(":/assets/img%1.png").arg(imageId);
         newCard->setupCard(id, imgPath);
         connect(newCard, &Card::clicked, this, &MainWindow::onCardClicked);
@@ -227,63 +235,53 @@ void MainWindow::setupGame() {
     p2TurnBar->setFixedHeight(10);
     p2TurnBar->setStyleSheet("QProgressBar { background-color: #333; border-radius: 5px; } QProgressBar::chunk { background-color: #2ECC71; border-radius: 5px; }");
 
-    p2Layout->addWidget(p2NameLabel);
-    p2Layout->addWidget(p2TurnBar);
-    p2Layout->addWidget(p2ScoreLabel);
+    p2Layout->addWidget(p2NameLabel); 
+    p2Layout->addWidget(p2TurnBar); 
+    p2Layout->addWidget(p2ScoreLabel); 
     p2Layout->addStretch();
     mainLayout->addWidget(p2Panel);
 
     updatePlayerUI();
-    resetTurnTimer(); // টাইমার সেট করা
+    resetTurnTimer();
     gameTimer->start(1000);
 }
 
 // ==========================================
-// TURN TIMER LOGIC (NEW)
+// TURN TIMER LOGIC
 // ==========================================
 void MainWindow::resetTurnTimer() {
-    turnTimeRemaining = TURN_DURATION; // ১০০ পয়েন্ট (ধরলাম ১০ সেকেন্ড, প্রতি ১০০ms এ ১ কমবে)
-
-    // সব বার ফুল করা
+    turnTimeRemaining = TURN_DURATION;
+    
     p1TurnBar->setValue(TURN_DURATION);
     p2TurnBar->setValue(TURN_DURATION);
 
-    // বার কালার সবুজ করা
     QString greenStyle = "QProgressBar { background-color: #333; border-radius: 5px; } QProgressBar::chunk { background-color: #2ECC71; border-radius: 5px; }";
     p1TurnBar->setStyleSheet(greenStyle);
     p2TurnBar->setStyleSheet(greenStyle);
 
-    // টাইমার চালু (প্রতি ১০০ মিলিসেকেন্ডে কল হবে)
-    turnTimer->start(100);
+    turnTimer->start(100); 
 }
 
 void MainWindow::updateTurnTimer() {
-    if(isProcessing) return; // কার্ড ম্যাচ চেক করার সময় টাইমার কমবে না
+    if(isProcessing) return;
 
     turnTimeRemaining--;
 
-    // বর্তমান প্লেয়ারের বার আপডেট করা
     QProgressBar *currentBar = (currentPlayer == 1) ? p1TurnBar : p2TurnBar;
     currentBar->setValue(turnTimeRemaining);
 
-    // কালার চেঞ্জ লজিক (৩০% এর কম হলে লাল, ৬০% হলে হলুদ)
     if(turnTimeRemaining < 30) {
-        currentBar->setStyleSheet("QProgressBar { background-color: #333; border-radius: 5px; } QProgressBar::chunk { background-color: #E74C3C; border-radius: 5px; }"); // লাল
+        currentBar->setStyleSheet("QProgressBar { background-color: #333; border-radius: 5px; } QProgressBar::chunk { background-color: #E74C3C; border-radius: 5px; }"); // Red
     } else if(turnTimeRemaining < 60) {
-        currentBar->setStyleSheet("QProgressBar { background-color: #333; border-radius: 5px; } QProgressBar::chunk { background-color: #F1C40F; border-radius: 5px; }"); // হলুদ
+        currentBar->setStyleSheet("QProgressBar { background-color: #333; border-radius: 5px; } QProgressBar::chunk { background-color: #F1C40F; border-radius: 5px; }"); // Yellow
     }
 
-    // সময় শেষ হলে
     if(turnTimeRemaining <= 0) {
-        playSound("wrong.wav"); // টাইম আপ সাউন্ড
-
-        // যদি একটি কার্ড উল্টানো থাকে, সেটা নামিয়ে দাও
+        playSound("wrong.wav");
         if(firstCard) {
             firstCard->reset();
             firstCard = nullptr;
         }
-
-        // টার্ন সুইচ করা
         switchTurn();
     }
 }
@@ -292,15 +290,15 @@ void MainWindow::updatePlayerUI() {
     QString activeStyle = "QFrame { background-color: rgba(255, 255, 255, 0.2); border: 4px solid #2ECC71; border-radius: 15px; }";
     QString inactiveStyle = "QFrame { background-color: rgba(0, 0, 0, 0.2); border: 2px solid #555; border-radius: 15px; }";
 
-    if(currentPlayer == 1) {
-        p1Panel->setStyleSheet(activeStyle);
-        p2Panel->setStyleSheet(inactiveStyle);
-        p1TurnBar->setVisible(true); // যার টার্ন তার বার দেখাবে
-        p2TurnBar->setVisible(false); // অন্যেরটা লুকাবে বা ডিম হবে
+    if(currentPlayer == 1) { 
+        p1Panel->setStyleSheet(activeStyle); 
+        p2Panel->setStyleSheet(inactiveStyle); 
+        p1TurnBar->setVisible(true);
+        p2TurnBar->setVisible(false);
     }
-    else {
-        p1Panel->setStyleSheet(inactiveStyle);
-        p2Panel->setStyleSheet(activeStyle);
+    else { 
+        p1Panel->setStyleSheet(inactiveStyle); 
+        p2Panel->setStyleSheet(activeStyle); 
         p1TurnBar->setVisible(false);
         p2TurnBar->setVisible(true);
     }
@@ -309,7 +307,7 @@ void MainWindow::updatePlayerUI() {
 void MainWindow::switchTurn() {
     currentPlayer = (currentPlayer == 1) ? 2 : 1;
     updatePlayerUI();
-    resetTurnTimer(); // নতুন টার্ন, নতুন সময়
+    resetTurnTimer();
 }
 
 // ==========================================
@@ -328,7 +326,7 @@ void MainWindow::onCardClicked() {
     } else {
         secondCard = clickedCard;
         isProcessing = true;
-        turnTimer->stop(); // ম্যাচ চেক করার সময় টাইমার থামবে
+        turnTimer->stop();
         QTimer::singleShot(800, this, &MainWindow::checkMatch);
     }
 }
@@ -342,9 +340,9 @@ void MainWindow::checkMatch() {
 
         if(currentPlayer == 1) { scoreP1++; p1ScoreLabel->setText(QString::number(scoreP1)); }
         else { scoreP2++; p2ScoreLabel->setText(QString::number(scoreP2)); }
-
+        
         if (matchedPairs == totalPairs) {
-            gameTimer->stop(); turnTimer->stop(); // সব থামাও
+            gameTimer->stop(); turnTimer->stop();
             QTimer::singleShot(1000, [this](){
                 playSound("win.wav");
                 QString winnerMsg;
@@ -354,10 +352,9 @@ void MainWindow::checkMatch() {
                 showGameOverScreen(winnerMsg);
             });
         } else {
-            // মিলে গেলে একই প্লেয়ার আবার সুযোগ পাবে, তাই টাইমার রিসেট
-            resetTurnTimer();
-            isProcessing = false;
-            firstCard = nullptr; secondCard = nullptr;
+             resetTurnTimer();
+             isProcessing = false;
+             firstCard = nullptr; secondCard = nullptr;
         }
     } else {
         playSound("wrong.wav");
@@ -367,9 +364,9 @@ void MainWindow::checkMatch() {
             firstCard->reset(); secondCard->reset();
             firstCard = nullptr; secondCard = nullptr;
             isProcessing = false;
-            switchTurn(); // টাইমার রিসেট switchTurn এর ভেতর আছে
+            switchTurn();
         });
-        return;
+        return; 
     }
 }
 
@@ -382,7 +379,7 @@ void MainWindow::showGameOverScreen(QString winnerName) {
     gameOverDialog.setStyleSheet(
         "QDialog { background-color: white; border: 4px solid #F1C40F; border-radius: 20px; }"
         "QLabel { color: #2C3E50; }"
-        );
+    );
 
     QVBoxLayout *layout = new QVBoxLayout(&gameOverDialog);
     layout->setSpacing(20); layout->setContentsMargins(40, 40, 40, 40);
@@ -412,7 +409,7 @@ void MainWindow::showGameOverScreen(QString winnerName) {
 void MainWindow::togglePause() {
     isPaused = !isPaused;
     if(isPaused) {
-        gameTimer->stop(); turnTimer->stop(); // পজ দিলে টার্ন টাইমারও থামবে
+        gameTimer->stop(); turnTimer->stop();
         pauseButton->setText("▶");
         gridContainer->setVisible(false);
         centerLayout->insertWidget(1, pauseOverlay); pauseOverlay->setVisible(true);
