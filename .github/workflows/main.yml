@@ -25,45 +25,46 @@ jobs:
         with:
           ndk-version: r26b
 
-      - name: Install Qt (Fixed Path)
+      - name: Install Qt (Manual Method)
         run: |
           pip install aqtinstall
-          # আমরা নির্দিষ্ট করে বলছি ${{ github.workspace }}/Qt ফোল্ডারে ইন্সটল করতে
+          # Android এবং Desktop দুটোই ইন্সটল করা হচ্ছে
           python -m aqt install-qt linux android 6.6.0 android_arm64_v8a --outputdir ${{ github.workspace }}/Qt
           python -m aqt install-qt linux desktop 6.6.0 gcc_64 --outputdir ${{ github.workspace }}/Qt
 
       - name: Build APK
         run: |
-          # 1. Environment Variables
+          # 1. Environment Variables Set
           export ANDROID_SDK_ROOT=$ANDROID_HOME
           export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
           
-          # 2. Define Absolute Paths (যাতে ভুল না হয়)
+          # 2. Path Definition
           QT_ROOT="${{ github.workspace }}/Qt/6.6.0"
           ANDROID_QT="$QT_ROOT/android_arm64_v8a"
           DESKTOP_QT="$QT_ROOT/gcc_64"
           
-          # Add Qt binaries to PATH
-          export PATH=$DESKTOP_QT/bin:$ANDROID_QT/bin:$PATH
+          # Add Qt binaries to PATH (Both Android and Desktop bins are needed)
+          export PATH=$ANDROID_QT/bin:$DESKTOP_QT/bin:$PATH
           
           # 3. Create build directory
           mkdir build
           cd build
           
-          # 4. Run qmake (Using Absolute Path)
-          # আপনার ফাইলের নাম 'Memoryflipgame.pro' ধরে নেওয়া হলো। 
-          # যদি ফাইলের নাম ভিন্ন হয় (যেমন MemoryFlipGame.pro), তবে নিচের লাইনে নামটা ঠিক করে দেবেন।
-          $DESKTOP_QT/bin/qmake ../Memoryflipgame.pro -spec android-clang
+          # 4. Run qmake (THE FIX IS HERE)
+          # আমরা সরাসরি Android ফোল্ডারের qmake ব্যবহার করছি। 
+          # এটি অটোমেটিক Desktop Qt এর সাথে কানেক্ট করে নেবে।
+          
+          $ANDROID_QT/bin/qmake ../Memoryflipgame.pro
           
           # 5. Compile
           make -j$(nproc)
           
-          # 6. Generate APK
-          make apk_install_target
+          # 6. Generate APK using androiddeployqt
+          # make apk কমান্ড অনেক সময় কাজ করে না, তাই আমরা ম্যানুয়ালি deploy টুল চালাব
+          $ANDROID_QT/bin/androiddeployqt --input android-libMemoryflipgame.so-deployment-settings.json --output android-build --android-platform android-24 --gradle --apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: MemoryFlipGame-APK
-          # APK ফাইলটি যেখানে তৈরি হবে সেখান থেকে খুঁজে নেবে
           path: build/android-build/build/outputs/apk/debug/*.apk
