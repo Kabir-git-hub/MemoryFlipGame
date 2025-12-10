@@ -25,55 +25,45 @@ jobs:
         with:
           ndk-version: r26b
 
-      - name: Install Qt (Manual Method)
+      - name: Install Qt (Fixed Path)
         run: |
-          # 1. Install aqtinstall tool using Python
           pip install aqtinstall
-          
-          # 2. Install Qt for Android (Libraries)
-          python -m aqt install-qt linux android 6.6.0 android_arm64_v8a
-          
-          # 3. Install Qt for Linux Desktop (Needed for qmake tool)
-          python -m aqt install-qt linux desktop 6.6.0 gcc_64
+          # আমরা নির্দিষ্ট করে বলছি ${{ github.workspace }}/Qt ফোল্ডারে ইন্সটল করতে
+          python -m aqt install-qt linux android 6.6.0 android_arm64_v8a --outputdir ${{ github.workspace }}/Qt
+          python -m aqt install-qt linux desktop 6.6.0 gcc_64 --outputdir ${{ github.workspace }}/Qt
 
       - name: Build APK
         run: |
-          # Set Environment Variables
+          # 1. Environment Variables
           export ANDROID_SDK_ROOT=$ANDROID_HOME
           export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
           
-          # Add Qt binaries to PATH (Desktop version is needed to run qmake)
-          export PATH=$PWD/Qt/6.6.0/gcc_64/bin:$PATH
-          export PATH=$PWD/Qt/6.6.0/android_arm64_v8a/bin:$PATH
+          # 2. Define Absolute Paths (যাতে ভুল না হয়)
+          QT_ROOT="${{ github.workspace }}/Qt/6.6.0"
+          ANDROID_QT="$QT_ROOT/android_arm64_v8a"
+          DESKTOP_QT="$QT_ROOT/gcc_64"
           
-          # Create build directory
+          # Add Qt binaries to PATH
+          export PATH=$DESKTOP_QT/bin:$ANDROID_QT/bin:$PATH
+          
+          # 3. Create build directory
           mkdir build
           cd build
           
-          # Run qmake
-          # We use the desktop qmake but tell it to target android
-          ../Qt/6.6.0/gcc_64/bin/qt-cmake \
-            -S .. \
-            -B . \
-            -DCMAKE_TOOLCHAIN_FILE=$PWD/../Qt/6.6.0/android_arm64_v8a/lib/cmake/Qt6/qt.toolchain.cmake \
-            -DQT_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
-            -DANDROID_ABI=arm64-v8a \
-            -DANDROID_PLATFORM=android-24 || \
-          ../Qt/6.6.0/gcc_64/bin/qmake .. -spec android-clang
+          # 4. Run qmake (Using Absolute Path)
+          # আপনার ফাইলের নাম 'Memoryflipgame.pro' ধরে নেওয়া হলো। 
+          # যদি ফাইলের নাম ভিন্ন হয় (যেমন MemoryFlipGame.pro), তবে নিচের লাইনে নামটা ঠিক করে দেবেন।
+          $DESKTOP_QT/bin/qmake ../Memoryflipgame.pro -spec android-clang
           
-          # Note: The above tries CMake first, if fails, tries qmake. 
-          # Let's force qmake strictly as your project is .pro based:
-          
-          ../Qt/6.6.0/gcc_64/bin/qmake ../Memoryflipgame.pro -spec android-clang
-          
-          # Compile
+          # 5. Compile
           make -j$(nproc)
           
-          # Generate APK
+          # 6. Generate APK
           make apk_install_target
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: MemoryFlipGame-APK
-          path: build/android-build/*.apk
+          # APK ফাইলটি যেখানে তৈরি হবে সেখান থেকে খুঁজে নেবে
+          path: build/android-build/build/outputs/apk/debug/*.apk
