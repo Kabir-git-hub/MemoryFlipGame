@@ -7,18 +7,21 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , mainContainer(nullptr)
-    , firstCard(nullptr)
-    , secondCard(nullptr)
-    , isProcessing(false)
-    , isPaused(false)
-    , isMuted(false)
-    , matchedPairs(0)
-    , currentPlayer(1)
-    , scoreP1(0)
-    , scoreP2(0)
-    , currentLevel(Medium)
 {
+    // === FIX: ভেরিয়েবলগুলো এখানে ইনিশিয়ালাইজ করা হলো ===
+    // এতে অর্ডারিং এরর আর আসবে না
+    firstCard = nullptr;
+    secondCard = nullptr;
+    isProcessing = false;
+    isPaused = false;
+    isMuted = false;
+    matchedPairs = 0;
+    currentPlayer = 1;
+    scoreP1 = 0;
+    scoreP2 = 0;
+    currentLevel = Medium;
+    mainContainer = nullptr;
+
     this->setWindowTitle("Memory Flip - Ultimate Battle");
     this->resize(1150, 850);
 
@@ -148,7 +151,6 @@ void MainWindow::setupGame() {
     p1ScoreLabel->setAlignment(Qt::AlignCenter);
     p1ScoreLabel->setStyleSheet("font-size: 50px; font-weight: bold; color: #3498DB;");
     
-    // P1 Progress Bar
     p1TurnBar = new QProgressBar(p1Panel);
     p1TurnBar->setRange(0, TURN_DURATION);
     p1TurnBar->setValue(TURN_DURATION);
@@ -227,7 +229,6 @@ void MainWindow::setupGame() {
     p2ScoreLabel->setAlignment(Qt::AlignCenter);
     p2ScoreLabel->setStyleSheet("font-size: 50px; font-weight: bold; color: #E74C3C;");
 
-    // P2 Progress Bar
     p2TurnBar = new QProgressBar(p2Panel);
     p2TurnBar->setRange(0, TURN_DURATION);
     p2TurnBar->setValue(TURN_DURATION);
