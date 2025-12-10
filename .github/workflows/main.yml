@@ -11,39 +11,52 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          version: '6.6.0'
-          host: 'linux'
-          target: 'android'
-          arch: 'android_arm64_v8a'
-          dir: '${{ github.workspace }}/qt/'
-          install-deps: 'true'
-          modules: 'qtmultimedia'
-
       - name: Setup Java (JDK 17)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK/NDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26b
+
+      # এই স্টেপটি নতুন। এটি ডেস্কটপ এবং এন্ড্রয়েড দুটো টুলই নামাবে।
+      - name: Install Qt (Host & Target)
+        uses: miurahr/aqtinstall-action@v1
+        with:
+          version: '6.6.0'
+          host: 'linux'
+          target: 'android'
+          arch: 'android_arm64_v8a'
+          install_deps: 'true'
+          tools: 'tools_qtcreator,qt.tools.qtcreator'
 
       - name: Build APK
         run: |
-          # Create build directory
+          # Environment Setup
+          export ANDROID_SDK_ROOT=$ANDROID_HOME
+          export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
+          
+          # Qt Path ঠিক করা (aqtinstall ডিফল্ট পাথে ইন্সটল করে)
+          export PATH=$PATH:/home/runner/work/MemoryFlipGame/MemoryFlipGame/Qt/6.6.0/android_arm64_v8a/bin
+          export PATH=$PATH:/home/runner/work/MemoryFlipGame/MemoryFlipGame/Qt/6.6.0/gcc_64/bin
+          
+          # বিল্ড ফোল্ডার তৈরি
           mkdir build
           cd build
           
-          # Run qmake (Replace Memoryflipgame.pro with your EXACT file name if different)
-          qmake ../Memoryflipgame.pro -spec android-clang
+          # qmake রান করা (আপনার ফাইলের নামের সাথে মিলিয়ে)
+          /home/runner/work/MemoryFlipGame/MemoryFlipGame/Qt/6.6.0/android_arm64_v8a/bin/qmake ../Memoryflipgame.pro -spec android-clang
           
-          # Compile
+          # কম্পাইল করা
           make -j$(nproc)
           
-          # Generate APK
+          # APK তৈরি করা
           make apk
 
       - name: Upload APK Artifact
