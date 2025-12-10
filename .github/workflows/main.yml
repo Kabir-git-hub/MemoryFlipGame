@@ -1,0 +1,53 @@
+name: Build Android APK
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build for Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.6.0'
+          host: 'linux'
+          target: 'android'
+          arch: 'android_arm64_v8a'
+          dir: '${{ github.workspace }}/qt/'
+          install-deps: 'true'
+          modules: 'qtmultimedia'
+
+      - name: Setup Java (JDK 17)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK/NDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build APK
+        run: |
+          # Create build directory
+          mkdir build
+          cd build
+          
+          # Run qmake (Replace Memoryflipgame.pro with your EXACT file name if different)
+          qmake ../Memoryflipgame.pro -spec android-clang
+          
+          # Compile
+          make -j$(nproc)
+          
+          # Generate APK
+          make apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MemoryFlipGame-APK
+          path: build/android-build//build/outputs/apk/debug/*.apk
